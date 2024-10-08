@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import Image from 'next/image';
+import Image from "next/legacy/image";
 import PostPage_1 from '../../assets/Images/PostPage_1.png';
 import PostPage_2 from '../../assets/Images/PostPage_2.png';
 import PostPage_3 from '../../assets/Images/PostPage_3.png';

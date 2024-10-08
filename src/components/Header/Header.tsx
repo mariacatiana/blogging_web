@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import logo from '../../assets/Images/logo.png'; 
-import Image from 'next/image';
+import Image from "next/legacy/image";
 import { GiHamburgerMenu } from "react-icons/gi";
 
 const HeaderContainer = styled.header`

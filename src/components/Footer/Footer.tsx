@@ -2,7 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import logo from '../../assets/Images/logo.png';
 import footerBackground from '../../assets/Images/background_Footer.png'; 
-import Image from 'next/image';
+import Image from "next/legacy/image";
 import { FaFacebookF, FaTwitter, FaInstagram, FaLinkedinIn, FaYoutube } from 'react-icons/fa';
 
 const FooterContainer = styled.footer`
