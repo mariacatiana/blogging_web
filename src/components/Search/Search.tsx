@@ -1,105 +1,33 @@
-import React, { useState } from 'react';
-import illustration_1 from '../../assets/Images/illustration_1.png';
-import illustration_2 from '../../assets/Images/illustration_2.png';
+import React, { useState, useEffect } from 'react';
 import { IoSearchOutline } from 'react-icons/io5';
 import styled from 'styled-components';
+import api from '../../app/api';
+
+interface SearchProps {
+  onCategorySelect: (category: string | null) => void;
+  onSearch: (results: any[]) => void;
+}
 
 interface TagItemProps {
-  isSelected: boolean;
-  isHovered: boolean;
+  $isSelected: boolean;
+  $category: string;
 }
 
 const SearchContainer = styled.div`
   display: flex;
-  padding: 0 32px;
-  box-sizing: border-box;
   flex-direction: column;
-  justify-content: space-between;
   align-items: center;
-  background-color: rgba(6, 9, 25, 0.9);
   width: 100%;
-    
-  position: relative; 
+  position: relative;
   z-index: 1;
-
-  @media (min-width: 768px) {
-    height: 150px;
-  }
-
-  @media (min-width: 1024px) {
-    height: 200px;
-  }
-`;
-
-const HeaderContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  gap: 24px;
-
-  @media (min-width: 768px) {
-    flex-direction: row;
-    justify-content: space-between;
-    gap: 32px;
-  }
-
-  @media (min-width: 1024px) {
-    gap: 64px;
-  }
-`;
-
-const Illustration = styled.img`
-  width: auto;
-  
-
-  
-`;
-
-const TitleContainer = styled.div`
-  text-align: center;
-  max-width: 600px;
-`;
-
-const Title = styled.h1`
-  color: white;
-  font-weight: bold;
-  font-size: 24px;
-  line-height: 1.2;
-  margin-bottom: 8px;
-
-  @media (min-width: 768px) {
-    font-size: 32px;
-  }
-
-  @media (min-width: 1024px) {
-    font-size: 40px;
-  }
-`;
-
-const Subtitle = styled.h2`
-  color: white;
-  font-size: 16px;
-  line-height: 1.4;
-  display: none;    
-
-  @media (min-width: 768px) {
-    display: block;
-    font-size: 18px;
-  }
 `;
 
 const SearchBarContainer = styled.div`
   display: flex;
   justify-content: center;
   width: 100%;
-  margin-top: -24px;
-
-  @media (min-width: 768px) {
-    margin: -24px;
-  }
-
+  position: relative;
+  top: -27px; // Metade da altura do SearchBar
 `;
 
 const SearchBar = styled.div`
@@ -110,15 +38,10 @@ const SearchBar = styled.div`
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   border-radius: 8px;
   width: 100%;
-  max-width: 400px;
-  height: 48px;
+  max-width: 600px;
+  height: 54px;
   padding: 0 16px;
   gap: 8px; 
-
-  @media (min-width: 768px) {
-    height: 54px;
-    max-width: 500px;
-  }
 `;
 
 const SearchInput = styled.input`
@@ -127,7 +50,7 @@ const SearchInput = styled.input`
   border: none;
   outline: none;
   color: rgba(255, 255, 255, 0.8);
-  font-size: 16px;
+  font-size: 18px;
   line-height: 1.2;
 
   ::placeholder {
@@ -142,25 +65,16 @@ const SearchInput = styled.input`
   &:focus {
     outline: none; 
   }
-
-  @media (min-width: 768px) {
-    font-size: 18px;
-  }
 `;
 
 const SearchIcon = styled(IoSearchOutline)`
   color: rgba(255, 255, 255, 0.8);  
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   transition: color 0.3s ease;
 
   &:hover {
     color: white; 
-  }
-
-  @media (min-width: 768px) {
-    width: 22px;
-    height: 22px;
   }
 `;
 
@@ -170,35 +84,58 @@ const TagsList = styled.ul`
   flex-wrap: wrap;
   list-style: none;
   gap: 16px;
-  margin-top: 48px; 
-
-  @media (min-width: 768px) {
-    gap: 24px;
-    margin-top: 56px;
-  }
-
-  @media (min-width: 1024px) {
-    gap: 32px;
-    margin-top: 56px;
-  }
 `;
 
 const TagItem = styled.li<TagItemProps>`
   cursor: pointer;
-  font-size: 14px;
-  transition: color 0.3s ease-in-out, border-bottom 0.3s ease-in-out;
-  color: ${(props) => (props.isSelected || props.isHovered ? '#FD841F' : '#A7A7A7')};
-  border-bottom: ${(props) => (props.isSelected || props.isHovered ? '1px solid #FD841F' : 'none')};
-  padding-bottom: 2px;
+  font-size: 16px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  transition: all 0.3s ease-in-out;
+  color: ${(props) => (props.$isSelected ? 'white' : '#A7A7A7')};
+  background-color: ${(props) => props.$isSelected ? props.$category : 'transparent'};
+  border: 1px solid ${(props) => props.$isSelected ? props.$category : '#A7A7A7'};
+
+  &:hover {
+    color: white;
+    background-color: ${(props) => props.$category};
+    border-color: ${(props) => props.$category};
+  }
 
   @media (min-width: 768px) {
-    font-size: 16px;
+    font-size: 18px;
   }
 `;
 
-function Search() {
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+const ErrorMessage = styled.div`
+  color: red;
+  text-align: center;
+  margin-top: 10px;
+`;
+
+const LoadingMessage = styled.div`
+  color: #666;
+  text-align: center;
+  margin-top: 10px;
+`;
+
+const categoryColors: { [key: string]: string } = {
+  'News': '#4A148C',
+  'Community': '#8B0000',
+  'Learning': '#34495E',
+  'Culture': '#A52A2A',
+  'Sports': '#216953',
+  'Student Spotlights': '#AE650C',
+  'Career and Future': '#C2185B',
+  'Technology and Innovation': '#1C78D2',
+  'Health and Well-being': '#58830A'
+};
+
+function Search({ onCategorySelect, onSearch }: SearchProps) {
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const tags = [
     'News', 'Community', 'Learning', 'Culture',
@@ -206,40 +143,74 @@ function Search() {
     'Technology and Innovation', 'Health and Well-being'
   ];
 
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      if (searchTerm) {
+        performSearch();
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchTerm, selectedCategory]);
+
+  const performSearch = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await api.get('/search', {
+        params: { 
+          term: searchTerm,
+          category: selectedCategory 
+        }
+      });
+      onSearch(response.data);
+    } catch (err) {
+      setError('Failed to perform search. Please try again.');
+      console.error('Error performing search:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCategorySelect = (category: string) => {
+    const newCategory = category === selectedCategory ? null : category;
+    setSelectedCategory(newCategory);
+    onCategorySelect(newCategory);
+  };
+
+  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
+
   return (
     <SearchContainer>
-      <HeaderContainer>
-        <Illustration src={illustration_1.src} alt="illustration of lines and stars" />
-        <TitleContainer>
-          <Title>School blog</Title>
-          <Subtitle>
-            Knowledge and learning at every click: news, lessons, and content to transform your education!
-          </Subtitle>
-        </TitleContainer>
-        <Illustration src={illustration_2.src} alt="illustration of geometric figures" />
-      </HeaderContainer>
-
       <SearchBarContainer>
         <SearchBar>
           <SearchIcon />
-          <SearchInput type="text" placeholder="Search" />
+          <SearchInput 
+            type="text" 
+            placeholder="Search" 
+            value={searchTerm}
+            onChange={handleSearchInputChange}
+          />
         </SearchBar>
       </SearchBarContainer>
 
       <TagsList>
-        {tags.map((tag, index) => (
+        {tags.map((tag) => (
           <TagItem
-            key={index}
-            isSelected={selectedIndex === index}
-            isHovered={hoverIndex === index}
-            onMouseEnter={() => setHoverIndex(index)}
-            onMouseLeave={() => setHoverIndex(null)}
-            onClick={() => setSelectedIndex(index)}
+            key={tag}
+            $isSelected={selectedCategory === tag}
+            $category={categoryColors[tag]}
+            onClick={() => handleCategorySelect(tag)}
           >
             {tag}
           </TagItem>
         ))}
       </TagsList>
+
+      {isLoading && <LoadingMessage>Searching...</LoadingMessage>}
+      {error && <ErrorMessage>{error}</ErrorMessage>}
     </SearchContainer>
   );
 }

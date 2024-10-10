@@ -1,35 +1,29 @@
-"use client";
-
 import React from 'react';
-import { createGlobalStyle } from 'styled-components';
+import StyledComponentsRegistry from '../lib/registry';
+import { Roboto } from 'next/font/google';
 
-const GlobalStyle = createGlobalStyle`
-  * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
+const roboto = Roboto({
+  weight: ['400', '700'],
+  subsets: ['latin'],
+  display: 'swap',
+});
 
-  body {
-    margin: 0;
-    font-family: 'Roboto', sans-serif; /* Define Roboto como a fonte padrão */
-  }
-`;
+export const metadata = {
+  title: 'Your App Name',
+  description: 'Description of your app',
+};
 
-export default function Layout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <>
-      <GlobalStyle />
-      <html lang="en">
-        <head>
-          {/* Adicione o link para a fonte Roboto no head */}
-          <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet" />
-        </head>
-        <body>
-          {children}
-        </body>
-      </html>
-    </>
+    <html lang="en" className={roboto.className}>
+      <body>
+        <StyledComponentsRegistry>{children}</StyledComponentsRegistry>
+      </body>
+    </html>
   );
 }
 

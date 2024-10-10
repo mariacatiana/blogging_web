@@ -1,104 +1,182 @@
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import Image from "next/legacy/image";
-import PostPage_1 from '../../assets/Images/PostPage_1.png';
-import PostPage_2 from '../../assets/Images/PostPage_2.png';
-import PostPage_3 from '../../assets/Images/PostPage_3.png';
-import PostPage_4 from '../../assets/Images/PostPage_4.png';
+import Link from 'next/link';
+import api from '../../app/api';
 
-const SectionContent = styled.div`
-  padding: 120px 0px;
+interface Post {
+  id: string;
+  title: string;
+  category: string;
+  date: string;
+  imageUrl: string;
+  link: string;
+}
+
+interface PostPageProps {
+  selectedCategory: string | null;
+  posts: Post[]; 
+}
+
+const Section = styled.div`
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 40px 20px;
+`;
 
-  @media (max-width: 768px) {
-    padding: 80px 20px;
+const Title = styled.h1`
+  font-size: 36px;
+  text-align: center;
+  color: #333;
+  opacity: 85%;
+  margin-top: 20px;
+`;
+
+const Subtitle = styled.h2`
+  font-size: 24px;
+  text-align: center;
+  color: #666;
+`;
+
+const Paragraph = styled.p`
+  opacity: 80%;
+  font-size: 24px;
+  margin-bottom: 20px;
+`;
+
+const CreatePostButton = styled(Link)`
+  display: inline-block;
+  padding: 10px 20px;
+  margin-top: 20px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #fff;
+  background-color: #FD841F;
+  border: none;
+  border-radius: 5px;
+  text-decoration: none;
+  transition: background-color 0.3s;
+
+  &:hover {
+    background-color: #E67E22;
   }
 `;
 
-const TileItem = styled.li<{ isSmall?: boolean }>`
-  position: relative;
-  list-style: none;
-  border-radius: 8px;
+const SubSection = styled.section`
+  width: 100%;
+  opacity: 1;
+  padding: 0 5%;
+  max-width: 1440px;
+  margin: 0 auto;
+
+  @media (min-width: 768px) {
+    padding: 0 88px;
+    max-width: 1780px;
+  }
+`;
+
+const SectionTiles = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+`;
+
+const FeaturedTile = styled.div`
+  width: 100%;
+  height: 400px;
+  border-radius: 10px;
   overflow: hidden;
+  position: relative;
   box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-  height: ${props => props.isSmall ? '600px' : '400px'};
-  padding-bottom: ${props => props.isSmall ? '0' : '56.25%'};
 
-  @media (max-width: 768px) {
-    height: ${props => props.isSmall ? '350px' : '250px'};
-  }
-
-  @media (max-width: 480px) {
-    height: ${props => props.isSmall ? '300px' : '200px'};
+  @media (min-width: 768px) {
+    height: 600px;
   }
 `;
 
-const TileLink = styled.a`
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+const SmallTilesContainer = styled.div`
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  list-style: none;  
+
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+`;
+
+const TileItem = styled.li`
+  border-radius: 10px;
+  overflow: hidden;
+  transition: transform 0.2s;
+  position: relative;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  height: 300px;
+    
+  &:hover {
+    transform: translateY(-5px);
+  }
+
+  @media (min-width: 768px) {
+    height: 350px;
+  }
+
+  @media (min-width: 1024px) {
+    height: 400px;
+  }
+`;
+
+const TileLink = styled(Link)`
+  display: block;
   text-decoration: none;
   color: inherit;
-`;
-
-const TileBackground = styled(Image)`
-  width: 100%;
   height: 100%;
-  object-fit: cover; // Atualizado para uso direto de estilo
+  position: relative;
 `;
 
 const TileContent = styled.div`
   position: absolute;
-  top: 0;
+  bottom: 0;
   left: 0;
   right: 0;
-  bottom: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
   padding: 20px;
-  background: linear-gradient(0deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0) 100%);
-`;
-
-const TileCategory = styled.div<{ category: string }>`
-  font-size: 16px;
-  padding: 4px 8px;
-  border-radius: 4px;
-  display: inline-block;
-  margin-bottom: 8px;
+  z-index: 1;
+  background: linear-gradient(0deg, rgba(0,0,0,50.8) 5%, rgba(0,0,0,0) 100%);
   color: white;
-  max-width: 240px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  background-color: ${({ category }) => {
-    switch (category) {
-      case 'Community': return '#047619';
-      case 'Sports': return '#68219E';
-      case 'Technology and Innovation': return '#00F';
-      default: return '#ff9900';
-    }
-  }};
 `;
 
-const TileHeadline = styled.h3`
-  font-size: 20px;
+const TileCategory = styled.div<{ $category?: string }>`
+   font-size: 12px;
+   color: white;
+   background-color: ${props => props.$category ? categoryColors[props.$category] : 'transparent'};
+   padding: 5px 10px;
+   border-radius: 8px;
+   display: inline-block;
+   margin-bottom: 10px;
+`;
+
+const categoryColors: { [key: string]: string } = {
+  'News': '#4A148C',
+  'Community': '#8B0000',
+  'Learning': '#34495E',
+  'Culture': '#A52A2A',
+  'Sports': '#216953',
+  'Student Spotlights': '#AE650C',
+  'Career and Future': '#C2185B',
+  'Technology and Innovation': '#1C78D2',
+  'Health and Well-being': '#58830A'
+};
+
+const TileHeadline = styled.div`
+  font-size: 18px;
   font-weight: bold;
-  margin: 0 0 8px 0;
-  color: white;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-
-  @media (max-width: 768px) {
-    font-size: 16px;
-  }
-
-  @media (max-width: 480px) {
-    font-size: 14px;
-  }
+  margin-bottom: 5px;
 `;
 
 const TileTimestamp = styled.div`
@@ -106,125 +184,114 @@ const TileTimestamp = styled.div`
   color: #ccc;
 `;
 
-const PostContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 60px;
-`;
-
-const BigPost = styled.div`
+const TileImage = styled.div`
   width: 100%;
-  padding: 0 88px;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
 
-  @media (max-width: 768px) {
-    padding: 0 40px;
-  }
-
-  @media (max-width: 480px) {
-    padding: 0 20px;
-  }
-`;
-
-const SmallPostsContainer = styled.div`
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-  padding: 0 88px;
-
-  @media (max-width: 1024px) {
-    grid-template-columns: repeat(2, 1fr);
-    padding: 0 60px;
-  }
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-    padding: 0 40px;
-  }
-
-  @media (max-width: 480px) {
-    padding: 0 20px;
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
 `;
 
-const ViewAllWrapper = styled.div`
-  display: flex;
-  justify-content: center;
-  margin-top: 24px;
-`;
-
-const ViewAllButton = styled.a<{ variant: 'outlined' | 'filled' }>`
-  cursor: pointer;
-  padding: 8px 16px;
-  font-family: 'Roboto', sans-serif;
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 24px;
-  border-radius: 8px;
-  background-color: ${({ variant }) => (variant === 'outlined' ? 'transparent' : '#FD841F')};
-  color: ${({ variant }) => (variant === 'outlined' ? '#FD841F' : 'white')};
+const LoadMoreButton = styled.button`
+  display: inline-block;
+  padding: 10px 20px;
+  margin-top: 20px;
+  font-size: 14px;
+  text-transform: uppercase;
+  font-weight: bold;
+  color: #FD841F;
+  background-color: transparent;
   border: 2px solid #FD841F;
-  transition: all 0.3s ease;
+  border-radius: 5px;
+  text-decoration: none;
+  transition: background-color 0.3s, color 0.3s;
 
   &:hover {
-    background-color: ${({ variant }) => (variant === 'outlined' ? '#FD841F' : 'white')};
-    color: ${({ variant }) => (variant === 'outlined' ? 'white' : '#FD841F')};
-  }
-
-  &:active {
-    transform: scale(0.95);
-  }
-
-  @media (max-width: 480px) {
-    font-size: 14px;
-    padding: 6px 12px;
+    background-color: #FD841F;
+    color: #fff;
   }
 `;
 
-const PostPage = () => {
+const LoadingMessage = styled.div`
+  font-size: 18px;
+  color: #666;
+  text-align: center;
+  margin-top: 20px;
+`;
+
+const ErrorMessage = styled.div`
+  font-size: 18px;
+  color: #ff0000;
+  text-align: center;
+  margin-top: 20px;
+`;
+
+const PostPage: React.FC<PostPageProps> = ({ selectedCategory, posts }) => {
+  const [visiblePosts, setVisiblePosts] = useState<number>(4);
+
+  const filteredPosts = posts ? (selectedCategory
+    ? posts.filter(post => post.category === selectedCategory)
+    : posts) : [];
+
+  const handleLoadMore = () => {
+    setVisiblePosts(prevVisible => Math.min(prevVisible + 3, filteredPosts.length));
+  };
+
+  const renderTile = (post: Post, isFeatured: boolean = false) => (
+    <TileLink href={`/post/${post.id}`}>
+      <TileImage>
+        <img src={post.imageUrl} alt={post.title} />
+      </TileImage>
+      <TileContent>
+        <TileCategory $category={post.category}>{post.category}</TileCategory>
+        <TileHeadline>{post.title}</TileHeadline>
+        <TileTimestamp>{post.date}</TileTimestamp>
+      </TileContent>
+    </TileLink>
+  );
+
+  if (!posts || posts.length === 0) {
+    return <Section>No posts available.</Section>;
+  }
+
   return (
-    <SectionContent>
-      <PostContainer>
-        <BigPost>
-          <TileItem>
-            <TileLink href="#">
-              <TileBackground src={PostPage_1} alt="Imagem do Post" fill />
-              <TileContent>
-                <TileCategory category="Culture">Culture</TileCategory>
-                <TileHeadline>
-                  Art, music, theater projects, cultural events, and book and movie recommendations.
-                </TileHeadline>
-                <TileTimestamp>August 21, 2024</TileTimestamp>
-              </TileContent>
-            </TileLink>
-          </TileItem>
-        </BigPost>
+    <Section>
+      <Title>Discover Our Latest Articles</Title>
+      <Subtitle>Stay updated with the latest school news and activities</Subtitle>
+      <Paragraph>Students, teachers, and staff making our school a place of learning and growth.</Paragraph>
 
-        <SmallPostsContainer>
-          {[
-            { image: PostPage_2, category: "Sports", headline: "Competition results, training schedules, and highlights from the school team." },
-            { image: PostPage_3, category: "Technology and Innovation", headline: "Tech news, robotics projects, programming, and innovations used at school." },
-            { image: PostPage_4, category: "Community", headline: "A forum for interaction between students, teachers, and parents, with tips and discussions about school life." }
-          ].map((post, index) => (
-            <TileItem key={index} isSmall>
-              <TileLink href="#">
-                <TileBackground src={post.image} alt="Imagem do Post" fill />
-                <TileContent>
-                  <TileCategory category={post.category}>{post.category}</TileCategory>
-                  <TileHeadline>{post.headline}</TileHeadline>
-                  <TileTimestamp>August 21, 2024</TileTimestamp>
-                </TileContent>
-              </TileLink>
-            </TileItem>
-          ))}
-        </SmallPostsContainer>
+      <CreatePostButton href="/post/create">Create Post</CreatePostButton>
 
-        <ViewAllWrapper>
-          <ViewAllButton variant="filled" href="/ver-tudo">Ver tudo</ViewAllButton>
-        </ViewAllWrapper>
-      </PostContainer>
-    </SectionContent>
+      <SubSection>
+        <SectionTiles>
+          {filteredPosts.length > 0 && (
+            <FeaturedTile>
+              {renderTile(filteredPosts[0], true)}
+            </FeaturedTile>
+          )}
+          <SmallTilesContainer>
+            {filteredPosts.slice(1, visiblePosts).map((post) => (
+              <TileItem key={post.id}>
+                {renderTile(post)}
+              </TileItem>
+            ))}
+          </SmallTilesContainer>
+        </SectionTiles>
+      </SubSection>
+
+      {visiblePosts < filteredPosts.length && (
+        <LoadMoreButton onClick={handleLoadMore}>
+          Load more articles
+        </LoadMoreButton>
+      )}
+    </Section>
   );
 };
 
 export default PostPage;
-

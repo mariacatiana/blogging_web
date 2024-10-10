@@ -1,10 +1,13 @@
 "use client";
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import Header from '../components/Header/Header';
 import Footer from '../components/Footer/Footer';
 import background from '../assets/Images/background.png';
 import Search from '../components/Search/Search';
 import PostPage from '../components/postPage/postPage';
+import TransparentHeader from '../components/Subheader/subheader';
+import api from '../app/api';
 
 const PageContainer = styled.div`
   display: flex;
@@ -15,47 +18,165 @@ const PageContainer = styled.div`
 `;
 
 const TopSection = styled.div`
-  background-image: url(${background.src});
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
   width: 100%;
-  height: 715px;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  position: relative;
+  height: 0;
+  padding-top: 56.25%;
 
   @media (max-width: 768px) {
-    height: 600px; // Ligeiramente menor em tablets
+    height: 600px;
   }
 
   @media (max-width: 480px) {
-    height: 500px; // Menor em smartphones
+    height: 500px;
   }
 `;
 
-const ContentSection = styled.div`
-  flex-grow: 1;
+const BackgroundImage = styled.img`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+`;
+
+const ContentWrapper = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+`;
+
+const TransparentHeaderContainer = styled.div`
+  position: absolute;
+  bottom: 0;
   width: 100%;
 `;
 
-function Page() { 
+const SearchContainer = styled.div`
+  width: 100%;
+  margin-top: -8px;
+`;
+
+const Section = styled.div`
+  width: 100%;
+  padding-top: 20px;
+`;
+
+const LoadingMessage = styled.div`
+  text-align: center;
+  font-size: 18px;
+  color: #666;
+  margin-top: 20px;
+`;
+
+const ErrorMessage = styled.div`
+  text-align: center;
+  font-size: 18px;
+  color: #ff0000;
+  margin-top: 20px;
+`;
+
+const NoPostsMessage = styled.div`
+  text-align: center;
+  font-size: 18px;
+  color: #666;
+  margin-top: 20px;
+`;
+
+interface Post {
+  id: string;
+  title: string;
+  category: string;
+  date: string;
+  imageUrl: string;
+  link: string;
+}
+
+function Page() {
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [searchResults, setSearchResults] = useState<Post[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [noPosts, setNoPosts] = useState(false);
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+      setIsLoading(true);
+      setError(null);
+      setNoPosts(false);
+
+      try {
+        const response = await api.get('/posts', {
+          params: { category: selectedCategory },
+        });
+
+        if (Array.isArray(response.data)) {
+          if (response.data.length === 0) {
+            setNoPosts(true); 
+          } else {
+            setSearchResults(response.data);
+          }
+        } else {
+          setError('Unexpected data format received from server.');
+        }
+      } catch (err) {
+        setError('Failed to fetch posts. Please try again later.');
+      } finally {
+        setIsLoading(false); 
+      }
+    };
+
+    fetchPosts();
+  }, [selectedCategory]);
+
+  const handleCategorySelect = (category: string | null) => {
+    setSelectedCategory(category);
+  };
+
+  const handleSearch = (results: Post[]) => {
+    setSearchResults(results);
+    setError(null);
+    setNoPosts(results.length === 0); 
+  };
+
   return (
     <PageContainer>
       <TopSection>
-        <Header />
-        <Search />
+        <BackgroundImage src={background.src} alt="Background" />
+        <ContentWrapper>
+          <Header />
+          <TransparentHeaderContainer>
+            <TransparentHeader />
+          </TransparentHeaderContainer>
+        </ContentWrapper>
       </TopSection>
-      <ContentSection>
-        <PostPage/>
-      </ContentSection>
-      <Footer />      
+      <SearchContainer>
+        <Search onCategorySelect={handleCategorySelect} onSearch={handleSearch} />
+      </SearchContainer>
+      <Section>
+        {isLoading ? (
+          <LoadingMessage>Loading posts...</LoadingMessage>
+        ) : noPosts ? (
+          <NoPostsMessage>No posts available.</NoPostsMessage> 
+        ) : (
+          <PostPage selectedCategory={selectedCategory} posts={searchResults} />
+        )}
+      </Section>
+      <Footer />
     </PageContainer>
   );
 }
 
 export default Page;
+
+
+
 
 
 

@@ -1,8 +1,24 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import logo from '../../assets/Images/logo.png'; 
-import Image from "next/legacy/image";
+import Image from "next/image";
 import { GiHamburgerMenu } from "react-icons/gi";
+import logo from '../../assets/Images/logo.png';
+import Link, { LinkProps } from 'next/link';
+
+type MenuItemType = {
+  label: string;
+  href: string;
+};
+
+type ButtonVariant = 'outlined' | 'filled';
+
+const MENU_ITEMS: MenuItemType[] = [
+  { label: 'Home', href: '/' },
+  { label: 'Elementary School', href: '/elementary' },
+  { label: 'High School', href: '/high-school' },
+  { label: 'Events', href: '/events' },
+  { label: 'Contact', href: '/contact' },
+];
 
 const HeaderContainer = styled.header`
   width: 100%;
@@ -10,10 +26,10 @@ const HeaderContainer = styled.header`
   justify-content: space-between;
   align-items: center;
   background-color: rgba(6, 9, 25, 0.90);
-  padding: 16px 32px; 
-  box-sizing: border-box; 
-  position: relative;  
-  z-index: 1; 
+  padding: 16px 32px;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 1;
 
   @media (max-width: 768px) {
     padding: 16px;
@@ -22,16 +38,18 @@ const HeaderContainer = styled.header`
 
 const LogoWrapper = styled.div`
   width: 128px;
-  height: auto;
+  height: 64px; // Ajuste conforme a proporção real do seu logo
+  position: relative;
 
   @media (max-width: 768px) {
     width: 100px;
+    height: 50px; // Ajuste conforme a proporção real do seu logo
   }
 `;
 
 const Menu = styled.ul`
   display: none;
-  gap: 16px;
+  gap: 56px;
   padding: 10px;
   font-family: 'Roboto', sans-serif;
   font-size: 16px;
@@ -41,39 +59,42 @@ const Menu = styled.ul`
 
   @media(min-width: 1024px) {
     display: flex;
-    gap: 56px;
   }
 `;
 
-const MenuItem = styled.li<{ selected: boolean, hovered: boolean }>`
+const MenuItem = styled(Link)<LinkProps & { $active?: boolean }>`
   cursor: pointer;
-  color: ${({ selected, hovered }) => (selected || hovered ? 'white' : '#FD841F')};
-  border-bottom: ${({ selected, hovered }) => (selected || hovered ? '1px solid white' : 'none')};
+  color: ${({ $active }) => ($active ? 'white' : '#FD841F')};
+  border-bottom: ${({ $active }) => ($active ? '1px solid white' : 'none')};
   padding-bottom: 4px;
   transition: color 0.3s ease, border-bottom 0.3s ease;
+  text-decoration: none;
 
-  &:active {
-    transform: scale(0.95); 
+  &:hover, &:active {
+    color: white;
+    border-bottom: 1px solid white;
   }
 `;
 
-const HamburgerMenu = styled(GiHamburgerMenu)`
+const HamburgerIcon = styled(GiHamburgerMenu)`
   color: white;
   display: none;
+  cursor: pointer;
 
   @media(max-width: 1023px) {
     display: block;
   }
 `;
 
-const MobileMenu = styled.div<{ isOpen: boolean }>`
-  display: ${({ isOpen }) => (isOpen ? 'block' : 'none')};
+const MobileMenu = styled.ul<{ $isOpen: boolean }>`
+  display: ${({ $isOpen }) => ($isOpen ? 'block' : 'none')};
   position: absolute;
   top: 100%;
   left: 0;
   width: 100%;
   background-color: rgba(6, 9, 25, 1);
   padding: 16px;
+  list-style: none;
   z-index: 1000;
 
   @media(min-width: 1024px) {
@@ -86,6 +107,7 @@ const MobileMenuItem = styled.li`
   cursor: pointer;
   padding: 12px 0;
   border-bottom: 1px solid rgba(253, 132, 31, 0.2);
+  text-decoration:none;
 
   &:last-child {
     border-bottom: none;
@@ -93,19 +115,15 @@ const MobileMenuItem = styled.li`
 `;
 
 const ButtonContainer = styled.div`
-  display: flex;
-  gap: 8px;
-  
-  @media(min-width: 768px) {
-    gap: 16px;
-  }
+  display: none;
+  gap: 16px;
 
-  @media(max-width: 1023px) {
-    display: none;
+  @media(min-width: 1024px) {
+    display: flex;
   }
 `;
 
-const Button = styled.button<{ variant: 'outlined' | 'filled' }>`
+const Button = styled.a<{ $variant: ButtonVariant; href?: string }>`
   cursor: pointer;
   padding: 8px 16px;
   font-family: 'Roboto', sans-serif;
@@ -113,74 +131,75 @@ const Button = styled.button<{ variant: 'outlined' | 'filled' }>`
   font-weight: 400;
   line-height: 24px;
   border-radius: 8px;
-  border: ${({ variant }) => (variant === 'outlined' ? '1px solid #FD841F' : 'none')};
-  background-color: ${({ variant }) => (variant === 'outlined' ? 'transparent' : '#FD841F')};
-  color: ${({ variant }) => (variant === 'outlined' ? '#FD841F' : 'white')};
+  border: 2px solid #FD841F;
+  background-color: ${({ $variant }) => ($variant === 'filled' ? '#FD841F' : 'transparent')};
+  color: ${({ $variant }) => ($variant === 'filled' ? 'white' : '#FD841F')};
   transition: all 0.3s ease;
+  text-decoration: none;
+  
 
   &:hover {
-    background-color: ${({ variant }) => (variant === 'outlined' ? 'white' : 'white')}; 
-    color: ${({ variant }) => (variant === 'outlined' ? '#FD841F' : '#FD841F')}; 
-    border: ${({ variant }) => (variant === 'outlined' ? '2px solid #FD841F' : '2px solid #FD841F')}; 
-  }
-
-  &:active {
-    transform: scale(0.95); 
+    background-color: white;
+    color: #FD841F;
   }
 `;
 
-function Header() {
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+const Header: React.FC = () => {
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleSelect = (index: number) => {
-    setSelectedIndex(index);
+    setActiveIndex(index);
     setIsMenuOpen(false);
-  };  
+  };
 
   return (
     <HeaderContainer>
       <LogoWrapper>
-        <Image src={logo} alt="Logo" layout="responsive" width={128} height={128} />
+        <Image
+          src={logo}
+          alt="Logo"
+          fill
+          sizes="(max-width: 768px) 100px, 128px"
+          style={{ objectFit: "contain" }}
+          priority
+        />
       </LogoWrapper>
 
       <Menu>
-        {['Home', 'Elementary School', 'High School', 'Events', 'Contact'].map((item, index) => (
+        {MENU_ITEMS.map((item,index) => (
           <MenuItem
-            key={index}
-            selected={selectedIndex === index}
-            hovered={hoverIndex === index}
-            onMouseEnter={() => setHoverIndex(index)}
-            onMouseLeave={() => setHoverIndex(null)}
+            key={item.href}
+            href={item.href}
+            $active={activeIndex === index}
             onClick={() => handleSelect(index)}
           >
-            {item}
+            {item.label}
           </MenuItem>
         ))}
       </Menu>
 
-      <HamburgerMenu size={24} onClick={() => setIsMenuOpen(!isMenuOpen)} />
+      <HamburgerIcon size={24} onClick={() => setIsMenuOpen(!isMenuOpen)} />
 
-      <MobileMenu isOpen={isMenuOpen}>
-        <ul>
-          {['Home', 'Elementary School', 'High School', 'Events', 'Contact'].map((item, index) => (
-            <MobileMenuItem
-              key={index}
-              onClick={() => handleSelect(index)}
-            >
-              {item}
-            </MobileMenuItem>
-          ))}
-        </ul>
+      <MobileMenu $isOpen={isMenuOpen}>
+        {MENU_ITEMS.map((item, index) => (
+          <MobileMenuItem
+            key={item.href}
+            onClick={() => handleSelect(index)}
+          >
+            {item.label}
+          </MobileMenuItem>
+        ))}
       </MobileMenu>
 
       <ButtonContainer>
-        <Button variant="outlined">Login</Button>
-        <Button variant="filled">Sign Up</Button>
+        <Button href="/login" $variant="outlined">Login</Button>
+        <Button href="/signup" $variant="filled">Sign Up</Button>
       </ButtonContainer>
+
     </HeaderContainer>
   );
-}
+};
 
 export default Header;
+
