@@ -5,6 +5,8 @@
 
 This project was developed as part of Challenge 3 of FIAP's Pós-Tech course, focusing on building the front-end interface of a blog application. The complete design prototype was created by me in Figma before the front-end implementation. Additionally, the application is connected to an API that I developed in Challenge 2 - Blogging API, creating a complete solution for managing blog posts.
 
+![Gif](https://github.com/mariacatiana/imagens/blob/6510d9926dbc1819ceeafc38109a828ba8deeab9/Gif%20Blogging%20Front-End.gif)
+
 ## 📖 Table of Contents
 1. [Features](#Features)
 2. [Technologies Used](#Technologies)
