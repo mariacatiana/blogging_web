@@ -26,6 +26,7 @@ The blog application includes the following features:
 - **Pagination of Posts:** The functionality to load more posts as the user navigates is fully implemented.
 - **Search by Keywords:** Users can search for posts by keywords using a search bar.
 
+![Gif](https://github.com/mariacatiana/imagens/blob/6510d9926dbc1819ceeafc38109a828ba8deeab9/Gif%20Blogging%20Front-End.gif)
 
 ## 🛠️ Technologies Used
 
