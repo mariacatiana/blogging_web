@@ -2,19 +2,24 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import Link from 'next/link';
 import api from '../../app/api';
-
+import { FaUserCircle } from 'react-icons/fa';
 interface Post {
-  id: string;
+  _id: string;
   title: string;
   category: string;
   date: string;
-  imageUrl: string;
+  cover?: string;
   link: string;
+  author: {
+    username: string;
+    avatar?: string;
+  };
+  content: string; 
+  createdAt: string;
 }
-
 interface PostPageProps {
   selectedCategory: string | null;
-  posts: Post[]; 
+  post: Post[]; 
 }
 
 const Section = styled.div`
@@ -140,25 +145,35 @@ const TileLink = styled(Link)`
   position: relative;
 `;
 
-const TileContent = styled.div`
+const Tilegradient = styled.div`
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 20px;
+  padding: 144px;
   z-index: 1;
-  background: linear-gradient(0deg, rgba(0,0,0,50.8) 5%, rgba(0,0,0,0) 100%);
+  background: linear-gradient(0deg, rgba(0,0,0,50.8) 20%, rgba(0,0,0,0) 100%);
+  color: white;
+`;
+
+const TileContent = styled.div`
+  position: absolute;
+  bottom: 32px;
+  left: 24px;
+  right: 0;
+  padding: 20px;
+  z-index: 2;  
   color: white;
 `;
 
 const TileCategory = styled.div<{ $category?: string }>`
-   font-size: 12px;
+   font-size: 18px;
    color: white;
    background-color: ${props => props.$category ? categoryColors[props.$category] : 'transparent'};
    padding: 5px 10px;
    border-radius: 8px;
    display: inline-block;
-   margin-bottom: 10px;
+   margin-bottom: 16px;
 `;
 
 const categoryColors: { [key: string]: string } = {
@@ -174,14 +189,15 @@ const categoryColors: { [key: string]: string } = {
 };
 
 const TileHeadline = styled.div`
-  font-size: 18px;
+  font-size: 24px;
   font-weight: bold;
-  margin-bottom: 5px;
+  margin-bottom: 16px;
 `;
 
 const TileTimestamp = styled.div`
-  font-size: 12px;
-  color: #ccc;
+  font-size: 16px;
+  color: white;
+  margin-bottom: 16px;
 `;
 
 const TileImage = styled.div`
@@ -196,6 +212,53 @@ const TileImage = styled.div`
     height: 100%;
     object-fit: cover;
   }
+`;
+const PostContentPreview = styled.p`
+  font-size: 16px;
+  color: #666;
+  margin-top: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.5;
+  color: white;
+  width: 80%;
+`;
+
+const TileAuthorInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: white;
+  bottom: 16px;
+`;
+
+const PostDate = styled.span`
+  font-size: 14px;
+  color: white;
+`;
+
+const Avatar = styled.div`
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+  background-color: #FFC700;
+  margin-bottom: 16px;
+`;
+
+const AvatarImage = styled.img`
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+`;
+
+const DefaultAvatarIcon = styled(FaUserCircle)`
+  width: 100%;
+  height: 100%;
+  color: white;
 `;
 
 const LoadMoreButton = styled.button`
@@ -218,47 +281,101 @@ const LoadMoreButton = styled.button`
   }
 `;
 
-const LoadingMessage = styled.div`
-  font-size: 18px;
-  color: #666;
-  text-align: center;
-  margin-top: 20px;
-`;
-
-const ErrorMessage = styled.div`
-  font-size: 18px;
-  color: #ff0000;
-  text-align: center;
-  margin-top: 20px;
-`;
-
-const PostPage: React.FC<PostPageProps> = ({ selectedCategory, posts }) => {
+  const PostPage: React.FC<PostPageProps> = ({ selectedCategory, post }) => {
+  const [postlist, setPosts] = useState<Post[]>(post || []);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   const [visiblePosts, setVisiblePosts] = useState<number>(4);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);  
+  const [imagePaths, setImagePaths] = useState<Record<string, string>>({});
 
-  const filteredPosts = posts ? (selectedCategory
-    ? posts.filter(post => post.category === selectedCategory)
-    : posts) : [];
+  useEffect(() => {
+    const fetchImages = async () => {
+      try {
+        const response = await api.get<Post[]>('/post');
+        const imagePathsData: Record<string, string> = {};
+        response.data.forEach(post => {
+          if (post.cover) {
+            imagePathsData[post._id] = post.cover;
+          }
+        });
+        setImagePaths(imagePathsData);
+      } catch (error) {
+        console.error('Error fetching images:', error);
+      }
+    };
+
+    fetchImages();
+  }, []);
+
+  useEffect(() => {    
+    const user = localStorage.getItem('user');
+    setIsLoggedIn(!!user);
+  }, []);
+
+  const filteredPosts = postlist ? (selectedCategory
+    ? postlist.filter(post => post.category === selectedCategory)
+    : postlist) : [];    
 
   const handleLoadMore = () => {
     setVisiblePosts(prevVisible => Math.min(prevVisible + 3, filteredPosts.length));
   };
 
-  const renderTile = (post: Post, isFeatured: boolean = false) => (
-    <TileLink href={`/post/${post.id}`}>
-      <TileImage>
-        <img src={post.imageUrl} alt={post.title} />
-      </TileImage>
-      <TileContent>
-        <TileCategory $category={post.category}>{post.category}</TileCategory>
-        <TileHeadline>{post.title}</TileHeadline>
-        <TileTimestamp>{post.date}</TileTimestamp>
-      </TileContent>
-    </TileLink>
-  );
+  const renderTile = (post: Post, isFeatured: boolean = false) => {    
 
-  if (!posts || posts.length === 0) {
-    return <Section>No posts available.</Section>;
-  }
+  let imageUrl;
+  if (post.cover) {
+    
+    const coverPath = post.cover.startsWith('/uploads/') 
+      ? post.cover.slice(8) 
+      : post.cover;    
+   
+    const hasExtension = /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(coverPath);
+    
+    imageUrl = hasExtension 
+      ? `http://localhost:4000/uploads/${coverPath}`
+      : `http://localhost:4000/uploads/${coverPath}.jpg`; 
+  } else {
+    imageUrl = `http://localhost:4000/uploads/defaultImage.jpg`;
+  } 
+  
+    return (
+      <TileLink href={`/post/${post._id}`}>
+        <TileImage>
+        <img src={imageUrl} alt={post.title} onError={(e) => {            
+            e.currentTarget.src = 'http://localhost:4000/uploads/defaultImage.jpg';
+          }}
+        />
+      </TileImage>
+
+      <Tilegradient/>
+
+        <TileContent>
+          <TileCategory $category={post.category}>{post.category}</TileCategory>
+          <TileHeadline>{post.title}</TileHeadline>
+          <PostContentPreview>{post.content}</PostContentPreview>
+          <TileTimestamp>{post.date}</TileTimestamp>
+          <TileAuthorInfo>
+          <Avatar>
+          {post.author && post.author.avatar ? (
+            <AvatarImage 
+              src={post.author.avatar} 
+              alt={`${post.author.username}'s avatar`} 
+            />
+          ) : (
+            <DefaultAvatarIcon />
+          )}
+        </Avatar>            
+        <TileTimestamp>
+          {post.author ? post.author.username : 'Unknown Author'} | {' '}
+              <PostDate>{new Date(post.createdAt).toLocaleDateString()}</PostDate>
+            </TileTimestamp>
+          </TileAuthorInfo>
+        </TileContent>
+      </TileLink>
+    );
+  };
+  
 
   return (
     <Section>
@@ -266,29 +383,37 @@ const PostPage: React.FC<PostPageProps> = ({ selectedCategory, posts }) => {
       <Subtitle>Stay updated with the latest school news and activities</Subtitle>
       <Paragraph>Students, teachers, and staff making our school a place of learning and growth.</Paragraph>
 
-      <CreatePostButton href="/post/create">Create Post</CreatePostButton>
+      {isLoggedIn && (
+        <CreatePostButton href="/post/create">Create Post</CreatePostButton>
+      )}
 
-      <SubSection>
-        <SectionTiles>
-          {filteredPosts.length > 0 && (
-            <FeaturedTile>
-              {renderTile(filteredPosts[0], true)}
-            </FeaturedTile>
+      {(!postlist || postlist.length === 0) ? (
+        <Paragraph>No posts available.</Paragraph>
+      ) : (
+        <>
+          <SubSection>
+            <SectionTiles>
+              {filteredPosts.length > 0 && (
+                <FeaturedTile>
+                  {renderTile(filteredPosts[0], true)}
+                </FeaturedTile>
+              )}
+              <SmallTilesContainer>
+                {filteredPosts.slice(1, visiblePosts).map((post) => (
+                  <TileItem key={post._id}>
+                    {renderTile(post)}
+                  </TileItem>
+                ))}
+              </SmallTilesContainer>
+            </SectionTiles>
+          </SubSection>
+
+          {visiblePosts < filteredPosts.length && (
+            <LoadMoreButton onClick={handleLoadMore}>
+              Load more articles
+            </LoadMoreButton>
           )}
-          <SmallTilesContainer>
-            {filteredPosts.slice(1, visiblePosts).map((post) => (
-              <TileItem key={post.id}>
-                {renderTile(post)}
-              </TileItem>
-            ))}
-          </SmallTilesContainer>
-        </SectionTiles>
-      </SubSection>
-
-      {visiblePosts < filteredPosts.length && (
-        <LoadMoreButton onClick={handleLoadMore}>
-          Load more articles
-        </LoadMoreButton>
+        </>
       )}
     </Section>
   );

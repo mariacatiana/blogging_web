@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import Image from "next/image";
 import { GiHamburgerMenu } from "react-icons/gi";
+import { FaUserCircle } from "react-icons/fa";
 import logo from '../../assets/Images/logo.png';
 import Link, { LinkProps } from 'next/link';
+import { useRouter } from 'next/navigation';
 
 type MenuItemType = {
   label: string;
@@ -135,8 +137,7 @@ const Button = styled.a<{ $variant: ButtonVariant; href?: string }>`
   background-color: ${({ $variant }) => ($variant === 'filled' ? '#FD841F' : 'transparent')};
   color: ${({ $variant }) => ($variant === 'filled' ? 'white' : '#FD841F')};
   transition: all 0.3s ease;
-  text-decoration: none;
-  
+  text-decoration: none;  
 
   &:hover {
     background-color: white;
@@ -144,13 +145,70 @@ const Button = styled.a<{ $variant: ButtonVariant; href?: string }>`
   }
 `;
 
+const UserInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+`;
+
+const UserName = styled.span`
+  color: #FFC700;
+  font-family: 'Roboto', sans-serif;
+  font-size: 16px;
+`;
+
+const Avatar = styled.div`
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #FFC700;
+  margin-right: 20px;
+`;
+
+const AvatarImage = styled.img`
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+`;
+
+const DefaultAvatarIcon = styled(FaUserCircle)`
+  width: 100%;
+  height: 100%;
+  color: white; // Cor do ícone
+`;
+
+const UserInfoContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+`;
+
 const Header: React.FC = () => {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [user, setUser] = useState<{ username: string; avatar?: string } | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
 
   const handleSelect = (index: number) => {
     setActiveIndex(index);
     setIsMenuOpen(false);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    setUser(null);
+    window.location.href = '/';
   };
 
   return (
@@ -187,19 +245,34 @@ const Header: React.FC = () => {
             key={item.href}
             onClick={() => handleSelect(index)}
           >
-            {item.label}
+            <Link href={item.href}>{item.label}</Link>
           </MobileMenuItem>
         ))}
       </MobileMenu>
 
-      <ButtonContainer>
-        <Button href="/login" $variant="outlined">Login</Button>
-        <Button href="/signup" $variant="filled">Sign Up</Button>
-      </ButtonContainer>
+      {user ? (
+        <UserInfo>
+          <UserInfoContainer>
+          <Avatar>
+            {user.avatar ? (
+              <AvatarImage src={user.avatar} alt={`${user.username}'s avatar`} />
+            ) : (
+              <DefaultAvatarIcon />
+            )}
+          </Avatar>
+          <UserName>Welcome, {user.username}</UserName>
+          </UserInfoContainer>
+          <Button as="button" onClick={handleLogout} $variant="outlined">Logout</Button>       
+        </UserInfo>
+      ) : (
+        <ButtonContainer>
+          <Button href="/login" $variant="outlined">Login</Button>
+          <Button href="/signup" $variant="filled">Sign Up</Button>
+        </ButtonContainer>
+      )}
 
     </HeaderContainer>
   );
-};
+}
 
 export default Header;
-

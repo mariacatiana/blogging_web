@@ -3,21 +3,17 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import Link from 'next/link';
-import api from '../../app/api';
 import { useRouter } from 'next/navigation';
+import api from '../../app/api';
+import axios, { AxiosError } from 'axios';
 
 interface AuthFormProps {
   isLogin: boolean;
 }
 
-const FormContainer = styled.div`
-  max-width: 400px;
-  margin: 50px auto;
-  padding: 20px;
-  background-color: #f9f9f9;
-  border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-`;
+interface ErrorResponse {
+  error: string;
+}
 
 const Form = styled.form`
   display: flex;
@@ -81,22 +77,34 @@ const AuthForm: React.FC<AuthFormProps> = ({ isLogin }) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
-
+  
     try {
-      let response;
-      if (isLogin) {
-        response = await api.post('/auth/login', { username, password });
-      } else {
-        response = await api.post('/auth/signup', { username, password });
-      }
+      const endpoint = isLogin ? '/login' : '/register';
+      const response = await api.post(endpoint, { username, password });      
       
-      const { token } = response.data;      
-     
-      localStorage.setItem('authToken', token);
+      localStorage.setItem('user', JSON.stringify({
+        username: response.data.username,
+        id: response.data.id
+      }));      
+      
+      if (response.data.token) {
+        localStorage.setItem('authToken', response.data.token);
+      }
       
       router.push('/');
     } catch (err) {
-      setError(isLogin ? 'Failed to login. Please try again.' : 'Failed to sign up. Please try again.');
+      if (axios.isAxiosError(err)) {
+        const axiosError = err as AxiosError<ErrorResponse>;
+        if (axiosError.response) {
+          setError(axiosError.response.data.error || 'Authentication failed. Please try again.');
+        } else if (axiosError.request) {
+          setError('No response from server. Please check your internet connection.');
+        } else {
+          setError(`Error: ${axiosError.message}`);
+        }
+      } else {
+        setError('An unexpected error occurred. Please try again.');
+      }
       console.error('Authentication error:', err);
     } finally {
       setIsLoading(false);
@@ -104,7 +112,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ isLogin }) => {
   };
 
   return (
-    <FormContainer>
+    <>
       <Form onSubmit={handleSubmit}>
         <Input
           type="text"
@@ -139,7 +147,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ isLogin }) => {
       <SwitchText>
         <StyledLink href="/forgot-password">Forgot username or password?</StyledLink>
       </SwitchText>
-    </FormContainer>
+    </>
   );
 };
 

@@ -7,7 +7,9 @@ import background from '../assets/Images/background.png';
 import Search from '../components/Search/Search';
 import PostPage from '../components/postPage/postPage';
 import TransparentHeader from '../components/Subheader/subheader';
+import Image from 'next/image';
 import api from '../app/api';
+
 
 const PageContainer = styled.div`
   display: flex;
@@ -32,7 +34,7 @@ const TopSection = styled.div`
   }
 `;
 
-const BackgroundImage = styled.img`
+const BackgroundImage = styled.div`
   position: absolute;
   top: 0;
   left: 0;
@@ -74,28 +76,19 @@ const LoadingMessage = styled.div`
   color: #666;
   margin-top: 20px;
 `;
-
-const ErrorMessage = styled.div`
-  text-align: center;
-  font-size: 18px;
-  color: #ff0000;
-  margin-top: 20px;
-`;
-
-const NoPostsMessage = styled.div`
-  text-align: center;
-  font-size: 18px;
-  color: #666;
-  margin-top: 20px;
-`;
-
 interface Post {
-  id: string;
+  _id: string;
   title: string;
   category: string;
   date: string;
-  imageUrl: string;
+  cover?: string;
   link: string;
+  author: {
+    username: string;
+    avatar?: string;
+  };
+  content: string;
+  createdAt: string; 
 }
 
 function Page() {
@@ -112,14 +105,15 @@ function Page() {
       setNoPosts(false);
 
       try {
-        const response = await api.get('/posts', {
+        const response = await api.get('/post', {
           params: { category: selectedCategory },
-        });
+        });        
 
         if (Array.isArray(response.data)) {
           if (response.data.length === 0) {
             setNoPosts(true); 
           } else {
+
             setSearchResults(response.data);
           }
         } else {
@@ -148,7 +142,18 @@ function Page() {
   return (
     <PageContainer>
       <TopSection>
-        <BackgroundImage src={background.src} alt="Background" />
+      <BackgroundImage>
+  <Image
+    src={background}
+    alt="Background"
+    fill
+    priority
+    sizes="100vw"
+    style={{
+      objectFit: 'cover',
+    }}
+  />
+</BackgroundImage>
         <ContentWrapper>
           <Header />
           <TransparentHeaderContainer>
@@ -162,10 +167,9 @@ function Page() {
       <Section>
         {isLoading ? (
           <LoadingMessage>Loading posts...</LoadingMessage>
-        ) : noPosts ? (
-          <NoPostsMessage>No posts available.</NoPostsMessage> 
-        ) : (
-          <PostPage selectedCategory={selectedCategory} posts={searchResults} />
+        ) 
+         : (
+          <PostPage selectedCategory={selectedCategory} post ={searchResults} />
         )}
       </Section>
       <Footer />

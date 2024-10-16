@@ -9,8 +9,7 @@ const roboto = Roboto({
 });
 
 export const metadata = {
-  title: 'Your App Name',
-  description: 'Description of your app',
+  title: 'School blog',
 };
 
 export default function RootLayout({
