@@ -41,7 +41,7 @@ The project utilizes a modern stack to ensure a performant and maintainable appl
 
 This project started with the design of a complete prototype in Figma, where all the screens and interactions were planned with a focus on usability and responsiveness. After the prototype was ready, the front-end was developed using Next.js and TypeScript to ensure a scalable and modern application.
 
-The application connects to the API developed in Challenge 2 - Blogging API, enabling dynamic post loading and a complete front-end and back-end integration. Dynamic routing was implemented using Next.js' App Router, with specific pages for each post's display.
+The application connects to the API developed in Challenge 2 - Blogging API (https://github.com/mariacatiana/blogging_api), enabling dynamic post loading and a complete front-end and back-end integration. Dynamic routing was implemented using Next.js' App Router, with specific pages for each post's display.
 
 How to run the project:
 
