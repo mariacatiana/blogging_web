@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { IoSearchOutline } from 'react-icons/io5';
 import styled from 'styled-components';
 import api from '../../app/api';
 
 interface SearchProps {
   onCategorySelect: (category: string | null) => void;
-  onSearch: (results: any[]) => void;
+  onSearch: (results: []) => void;
 }
 
 interface TagItemProps {
@@ -143,17 +143,7 @@ function Search({ onCategorySelect, onSearch }: SearchProps) {
     'Technology and Innovation', 'Health and Well-being'
   ];
 
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      if (searchTerm) {
-        performSearch();
-      }
-    }, 300);
-
-    return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm, selectedCategory]);
-
-  const performSearch = async () => {
+  const performSearch = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -170,7 +160,17 @@ function Search({ onCategorySelect, onSearch }: SearchProps) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [searchTerm, selectedCategory, onSearch]);
+
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      if (searchTerm) {
+        performSearch();
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchTerm, performSearch]);
 
   const handleCategorySelect = (category: string) => {
     const newCategory = category === selectedCategory ? null : category;

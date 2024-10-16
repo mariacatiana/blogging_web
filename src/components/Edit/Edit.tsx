@@ -105,7 +105,7 @@ const EditPostForm: React.FC<EditPostFormProps> = ({ postId, onEditSuccess }) =>
         const response = await api.get(`/post/${postId}`);
         setPost(response.data);
         setFormData(response.data);
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Error fetching post:', error);
         setError('Failed to fetch post data. Please try again.');
       } finally {
@@ -150,7 +150,7 @@ const EditPostForm: React.FC<EditPostFormProps> = ({ postId, onEditSuccess }) =>
       setFormData(response.data);
       onEditSuccess();
     } catch (err) {
-      setError('Failed to update the post. Please try again.');
+      setError('Failed to update the post. Please make sure you are the author of this post.');
       console.error('Error updating post:', err);
     } finally {
       setIsSubmitting(false);

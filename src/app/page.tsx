@@ -10,7 +10,6 @@ import TransparentHeader from '../components/Subheader/subheader';
 import Image from 'next/image';
 import api from '../app/api';
 
-
 const PageContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -96,33 +95,27 @@ function Page() {
   const [searchResults, setSearchResults] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [noPosts, setNoPosts] = useState(false);
 
   useEffect(() => {
     const fetchPosts = async () => {
       setIsLoading(true);
       setError(null);
-      setNoPosts(false);
 
       try {
         const response = await api.get('/post', {
           params: { category: selectedCategory },
-        });        
+        });
 
         if (Array.isArray(response.data)) {
-          if (response.data.length === 0) {
-            setNoPosts(true); 
-          } else {
-
-            setSearchResults(response.data);
-          }
+          setSearchResults(response.data);
         } else {
           setError('Unexpected data format received from server.');
         }
       } catch (err) {
         setError('Failed to fetch posts. Please try again later.');
+        console.error(err);
       } finally {
-        setIsLoading(false); 
+        setIsLoading(false);
       }
     };
 
@@ -136,24 +129,23 @@ function Page() {
   const handleSearch = (results: Post[]) => {
     setSearchResults(results);
     setError(null);
-    setNoPosts(results.length === 0); 
   };
 
   return (
     <PageContainer>
       <TopSection>
-      <BackgroundImage>
-  <Image
-    src={background}
-    alt="Background"
-    fill
-    priority
-    sizes="100vw"
-    style={{
-      objectFit: 'cover',
-    }}
-  />
-</BackgroundImage>
+        <BackgroundImage>
+          <Image
+            src={background}
+            alt="Background"
+            fill
+            priority
+            sizes="100vw"
+            style={{
+              objectFit: 'cover',
+            }}
+          />
+        </BackgroundImage>
         <ContentWrapper>
           <Header />
           <TransparentHeaderContainer>
@@ -167,9 +159,10 @@ function Page() {
       <Section>
         {isLoading ? (
           <LoadingMessage>Loading posts...</LoadingMessage>
-        ) 
-         : (
-          <PostPage selectedCategory={selectedCategory} post ={searchResults} />
+        ) : error ? (
+          <LoadingMessage>{error}</LoadingMessage>
+        ) : (
+          <PostPage selectedCategory={selectedCategory} post={searchResults} />
         )}
       </Section>
       <Footer />

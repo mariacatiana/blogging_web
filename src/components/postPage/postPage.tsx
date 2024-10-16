@@ -207,11 +207,12 @@ const TileImage = styled.div`
   top: 0;
   left: 0;
 
-  img {
+  svg {
     width: 100%;
     height: 100%;
     object-fit: cover;
   }
+
 `;
 const PostContentPreview = styled.p`
   font-size: 16px;
@@ -282,12 +283,9 @@ const LoadMoreButton = styled.button`
 `;
 
   const PostPage: React.FC<PostPageProps> = ({ selectedCategory, post }) => {
-  const [postlist, setPosts] = useState<Post[]>(post || []);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const [postlist] = useState<Post[]>(post || []); 
   const [visiblePosts, setVisiblePosts] = useState<number>(4);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);  
-  const [imagePaths, setImagePaths] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const fetchImages = async () => {
@@ -299,7 +297,7 @@ const LoadMoreButton = styled.button`
             imagePathsData[post._id] = post.cover;
           }
         });
-        setImagePaths(imagePathsData);
+        
       } catch (error) {
         console.error('Error fetching images:', error);
       }
@@ -321,7 +319,7 @@ const LoadMoreButton = styled.button`
     setVisiblePosts(prevVisible => Math.min(prevVisible + 3, filteredPosts.length));
   };
 
-  const renderTile = (post: Post, isFeatured: boolean = false) => {    
+  const renderTile = (post: Post) => {    
 
   let imageUrl;
   if (post.cover) {
@@ -342,11 +340,20 @@ const LoadMoreButton = styled.button`
     return (
       <TileLink href={`/post/${post._id}`}>
         <TileImage>
-        <img src={imageUrl} alt={post.title} onError={(e) => {            
-            e.currentTarget.src = 'http://localhost:4000/uploads/defaultImage.jpg';
+      <svg width="100%" height="100%">
+        <image 
+          href={imageUrl} 
+          width="100%" 
+          height="100%"
+          preserveAspectRatio="xMidYMid slice"
+          onError={(e: React.SyntheticEvent<SVGImageElement, Event>) => {
+            const target = e.currentTarget as SVGImageElement;
+            target.setAttribute('href', 'http://localhost:4000/uploads/defaultImage.jpg');
           }}
+          aria-label={post.title}
         />
-      </TileImage>
+      </svg>
+    </TileImage>
 
       <Tilegradient/>
 
@@ -395,7 +402,7 @@ const LoadMoreButton = styled.button`
             <SectionTiles>
               {filteredPosts.length > 0 && (
                 <FeaturedTile>
-                  {renderTile(filteredPosts[0], true)}
+                  {renderTile(filteredPosts[0])}
                 </FeaturedTile>
               )}
               <SmallTilesContainer>

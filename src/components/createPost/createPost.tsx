@@ -117,11 +117,11 @@ const CreatePost: React.FC = () => {
       router.push(`/post/${newPostId}`);
     } catch (err) {
       if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || 'Ocorreu um erro ao criar o post. Por favor, tente novamente.');
+        setError(err.response?.data?.message || 'An error occurred while creating the post. Please try again.');
       } else {
-        setError('Ocorreu um erro inesperado. Por favor, tente novamente.');
+        setError('An unexpected error has occurred. Please try again.');
       }
-      console.error('Erro ao criar post:', err);
+      console.error('Error creating post', err);
     } finally {
       setIsSubmitting(false);
     }

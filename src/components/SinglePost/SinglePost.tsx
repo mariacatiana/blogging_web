@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useRouter } from 'next/navigation';
 import api from '../../app/api';
+
 interface PostCategoryProps {
   $category: string;
 }
@@ -141,7 +142,27 @@ const SinglePost: React.FC<SinglePostProps> = ({ idPost }) => {
   const [postData, setPostData] = useState<Post | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<{ _id: string; username: string } | null>(null);
   const router = useRouter();   
+
+  useEffect(() => {
+    const fetchCurrentUser = () => {
+      try {
+        const userJson = localStorage.getItem('user');
+        if (userJson) {
+          const user = JSON.parse(userJson);
+          setCurrentUser(user);
+        } else {
+          setCurrentUser(null);
+        }
+      } catch (error) {
+        console.error('Error fetching current user:', error);
+        setCurrentUser(null);
+      }
+    };
+
+    fetchCurrentUser();
+  }, []);
 
   useEffect(() => {
     async function fetchData() {
@@ -157,23 +178,28 @@ const SinglePost: React.FC<SinglePostProps> = ({ idPost }) => {
       try {
         const response = await api.get(`/post/${idPost}`);
         setPostData(response.data);
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Error fetching post data:', error);
-        if (error.response) {
-          switch (error.response.status) {
-            case 404:
-              setError('Post not found');
-              break;
-            case 400:
-              setError('Invalid post ID');
-              break;
-            default:
-              setError('Failed to load post. Please try again later.');
+        if (error instanceof Error) {
+          if ('response' in error && error.response) {
+            const axiosError = error as { response: { status: number } };
+            switch (axiosError.response.status) {
+              case 404:
+                setError('Post not found');
+                break;
+              case 400:
+                setError('Invalid post ID');
+                break;
+              default:
+                setError('Failed to load post. Please try again later.');
+            }
+          } else if ('request' in error) {
+            setError('No response received from server. Please check your connection.');
+          } else {
+            setError('An unexpected error occurred. Please try again later.');
           }
-        } else if (error.request) {
-          setError('No response received from server. Please check your connection.');
         } else {
-          setError('An unexpected error occurred. Please try again later.');
+          setError('An unknown error occurred.');
         }
       } finally {
         setIsLoading(false);
@@ -214,7 +240,7 @@ const SinglePost: React.FC<SinglePostProps> = ({ idPost }) => {
         router.push('/');
       } catch (error) {
         console.error('Error deleting post:', error);
-        setError('Failed to delete post. Please try again later.');
+        setError('Failed to delete post. Please make sure you are the author of this post.');
       }
     }
   };
@@ -239,6 +265,8 @@ const SinglePost: React.FC<SinglePostProps> = ({ idPost }) => {
 
   const imageUrl = getImageUrl(postData.cover);
 
+  const isAuthor = currentUser && postData && currentUser._id === postData.author._id;
+
   return (
     <PostContainer>
       <PostImage 
@@ -248,9 +276,9 @@ const SinglePost: React.FC<SinglePostProps> = ({ idPost }) => {
           e.currentTarget.src = 'http://localhost:4000/uploads/defaultImage.jpg';
         }}
       />
-       <PostTitle>{postData.title}</PostTitle>      
+      <PostTitle>{postData.title}</PostTitle>      
       <PostMeta>
-      <PostCategory $category={postData.category}>{postData.category}</PostCategory>
+        <PostCategory $category={postData.category}>{postData.category}</PostCategory>
         <TileTimestamp>
           <PostDate>{formattedDate}</PostDate>
           <Separator>|</Separator>
@@ -258,10 +286,12 @@ const SinglePost: React.FC<SinglePostProps> = ({ idPost }) => {
         </TileTimestamp>
       </PostMeta>
       <PostContent dangerouslySetInnerHTML={{ __html: postData.content }} />
-      <ButtonContainer>
-        <EditButton onClick={handleEdit}>Edit</EditButton>
-        <DeleteButton onClick={handleDelete}>Delete</DeleteButton>
-      </ButtonContainer>
+      {isAuthor && (
+        <ButtonContainer>
+          <EditButton onClick={handleEdit}>Edit</EditButton>
+          <DeleteButton onClick={handleDelete}>Delete</DeleteButton>
+        </ButtonContainer>
+      )}
     </PostContainer>
   );
 };

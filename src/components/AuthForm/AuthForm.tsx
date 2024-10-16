@@ -136,7 +136,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ isLogin }) => {
       <SwitchText>
         {isLogin ? (
           <>
-            Don't have an account? <StyledLink href="/signup">Sign up</StyledLink>
+            Do not have an account? <StyledLink href="/signup">Sign up</StyledLink>
           </>
         ) : (
           <>

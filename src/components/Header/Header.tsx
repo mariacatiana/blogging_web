@@ -5,7 +5,6 @@ import { GiHamburgerMenu } from "react-icons/gi";
 import { FaUserCircle } from "react-icons/fa";
 import logo from '../../assets/Images/logo.png';
 import Link, { LinkProps } from 'next/link';
-import { useRouter } from 'next/navigation';
 
 type MenuItemType = {
   label: string;
@@ -190,8 +189,7 @@ const UserInfoContainer = styled.div`
 const Header: React.FC = () => {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [user, setUser] = useState<{ username: string; avatar?: string } | null>(null);
-  const router = useRouter();
+  const [user, setUser] = useState<{ username: string; avatar?: string } | null>(null);  
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
