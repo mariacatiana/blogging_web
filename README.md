@@ -28,6 +28,8 @@ The blog application includes the following features:
 
 ![Gif](https://github.com/mariacatiana/imagens/blob/6510d9926dbc1819ceeafc38109a828ba8deeab9/Gif%20Blogging%20Front-End.gif)
 
+Preview: https://blogging-web-phi.vercel.app/
+
 ## 🛠️ Technologies Used
 
 The project utilizes a modern stack to ensure a performant and maintainable application:
